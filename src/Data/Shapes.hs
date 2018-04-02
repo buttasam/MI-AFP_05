@@ -19,24 +19,50 @@ data Quadrilateral = Square { sqSide :: Double}
 
 class Validable a where
   valid :: a -> Bool
-  valid = undefined
+  area :: a -> Double
+  circumference :: a -> Double
 
--- TODO: complete instances for each type to check validity by `valid` function
 instance Validable Circle where
-  valid (Circle ciRadius)= ciRadius > 0
+  valid (Circle r)= r > 0
+  area (Circle r) = pi * r^2
+  circumference (Circle r) = 2 * pi * r
 
 instance Validable Triangle where
   valid (EquilateralTriangle a) =  a > 0
   valid (IsoscelesTriangle itBase itLeg) = (itBase > 0) && (itLeg > 0) && (2*itLeg > itBase)
   valid (ScaleneTriangle a b c) = (a > 0) && (b > 0) && (c > 0) && (a + b > c) && (a + c > b) && (c + b > a)
 
+  area (EquilateralTriangle a)
+                  | valid (EquilateralTriangle a) = heronArea a a a
+                  | otherwise = 0
+  area (IsoscelesTriangle itBase itLeg)
+                  | valid (IsoscelesTriangle itBase itLeg) = heronArea itBase itLeg itLeg
+                  | otherwise = 0
+  area (ScaleneTriangle a b c)
+                  | valid (ScaleneTriangle a b c) = heronArea a b c
+                  | otherwise = 0
+
+  circumference (EquilateralTriangle a)
+                  | valid (EquilateralTriangle a) = 3 * a
+                  | otherwise = 0
+  circumference (IsoscelesTriangle itBase itLeg)
+                  | valid (IsoscelesTriangle itBase itLeg) = itBase + itLeg + itLeg
+                  | otherwise = 0
+  circumference (ScaleneTriangle a b c)
+                  | valid (ScaleneTriangle a b c) = a + b + c
+                  | otherwise = 0
+
+heronArea :: Double -> Double -> Double -> Double
+heronArea a b c = sqrt (s*(s - a) * (s - b) * (s - c))
+                where s = (a + b + c) / 2
+
+
 instance Validable Quadrilateral where
   valid (Square a) = a > 0
   valid (Rectangle a b) = (a > 0) && (b > 0)
-
--- TODO: create appropriate typeclass for 2D shapes (subclass of Validable)
--- TODO: write instances for the types to compute circumference and area
-
--- Note: this dummy functions should be placed in typeclass
-area = undefined
-circumference = undefined
+  area (Square a) = a*a
+  area (Rectangle a b) = a*b
+  circumference (Square a) = 4*a
+  circumference (Rectangle a b)
+                | valid (Rectangle a b) = 2*a + 2*b
+                | otherwise = 0
