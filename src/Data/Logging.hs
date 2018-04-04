@@ -13,7 +13,7 @@ data EventSource = Internal { iesComponent   :: String
                  | Combined [EventSource]
                  | Unknown
                  deriving (Read, Eq, Ord)
-                 -- TODO: remove Ord here after implementing Ord for LogMessage
+
 instance Show EventSource where
     show (Internal iesComponent iesCallID) = "Internal[" ++ iesComponent ++ "]"
     show (External eesURI eesDescription) = "External[" ++ eesURI ++ "]"
@@ -26,8 +26,19 @@ data LogMessage = LogMessage
                 , lmTimestamp  :: UTCTime
                 , lmHiddenFlag :: Bool
                 , lmLogLevel   :: LogLevel
-                } deriving (Read, Eq, Ord)
-                -- TODO: custom instance of Show and Ord (hidden, timestamp, logLevel)
+                } deriving (Read, Eq)
+
+instance Show LogMessage where
+  show (LogMessage lmSource lmMessage lmTimestamp lmHiddenFlag lmLogLevel) = "[" ++ show lmLogLevel ++ "] " ++ show lmSource ++ ": " ++ lmMessage
+
+instance Ord LogMessage where
+  compare lm1 lm2 = case compare  (lmHiddenFlag lm2) (lmHiddenFlag lm1) of
+                    EQ -> case compare (lmLogLevel lm1) (lmLogLevel lm2) of
+                      EQ -> case compare (lmTimestamp lm1) (lmTimestamp lm2) of
+                        ord -> ord
+                      ord -> ord
+                    ord -> ord
+
 
 data EventSourceMatcher = Exact EventSource
                         | With EventSource
@@ -38,19 +49,18 @@ data EventSourceMatcher = Exact EventSource
                         | MatchAll [EventSourceMatcher]
                         deriving (Show, Read, Eq)
 
-instance Show LogMessage where
-  show (LogMessage lmSource lmMessage lmTimestamp lmHiddenFlag lmLogLevel) = "[" ++ show lmLogLevel ++ "] " ++ show lmSource ++ ": " ++ lmMessage
 
 -- | Change log level operator
--- TODO: implement operator which changes LogLevel of LogMessage
 ($=) :: LogMessage -> LogLevel -> LogMessage
-($=) = undefined
+($=) (LogMessage lmSource lmMessage lmTimestamp lmHiddenFlag lmLogLevel) changedLevel = LogMessage lmSource lmMessage lmTimestamp lmHiddenFlag changedLevel
 
 
 -- | EventSource "combinator"
--- TODO: implement operator which combines two EventSources (just 1 level for Combined, see tests)
 (@@) :: EventSource -> EventSource -> EventSource
-(@@) = undefined
+(@@) e1@(Combined a1) e2@(Combined a2) = Combined (a1 ++ a2)
+(@@) i1 e2@(Combined a2) = Combined ([i1] ++ a2)
+(@@) e2@(Combined a2) i1 = Combined (a2 ++ [i1])
+(@@) i1 i2 = (@@) (Combined [i1]) (Combined [i2])
 
 -- | Matching EventSource with EventSourceMatcher operator
 -- TODO: implement matching
