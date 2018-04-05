@@ -66,7 +66,24 @@ data EventSourceMatcher = Exact EventSource
 -- TODO: implement matching
 infixr 6 ~~
 (~~) :: EventSourceMatcher -> EventSource -> Bool
-(~~) = undefined
+(~~) (Exact ex) es = ex == es
+(~~) (With es) (Combined xs) = elem es xs
+(~~) (With es) _ = False
+(~~) AnyInternal (Internal _ _ ) = True
+(~~) AnyInternal (Combined (x:xs)) = (AnyInternal ~~ x) || (AnyInternal ~~ (Combined xs))
+(~~) AnyInternal (Combined []) = False
+(~~) AnyInternal _ = False
+(~~) AnyExternal (External _ _ ) = True
+(~~) AnyExternal (Combined (x:xs)) = (AnyExternal ~~ x) || (AnyExternal ~~ (Combined xs))
+(~~) AnyExternal (Combined []) = False
+(~~) AnyExternal _ = False
+(~~) Any _ = True
+(~~) (MatchAny (x:xs)) that = (x ~~ that) || (MatchAny xs ~~ that)
+(~~) (MatchAny []) that = False
+(~~) (MatchAll (x:xs)) that = (x ~~ that) && (MatchAll xs ~~ that)
+(~~) (MatchAll []) that = True
+
+
 
 -- | Specialized log list filter
 -- TODO: implement filter function for logs with matchers, log level and hidden flag
