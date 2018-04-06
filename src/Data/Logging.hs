@@ -86,6 +86,8 @@ infixr 6 ~~
 
 
 -- | Specialized log list filter
--- TODO: implement filter function for logs with matchers, log level and hidden flag
 logFilter :: EventSourceMatcher -> LogLevel -> Bool -> [LogMessage] -> [LogMessage]
-logFilter  = undefined
+logFilter matcher level flag messages = filter (\x ->  logMatch matcher level flag x) messages
+
+logMatch :: EventSourceMatcher -> LogLevel -> Bool -> LogMessage -> Bool
+logMatch matcher level flag msg@(LogMessage lmSource lmMessage lmTimestamp lmHiddenFlag lmLogLevel) = matcher ~~ lmSource && level <= lmLogLevel && flag == lmHiddenFlag
