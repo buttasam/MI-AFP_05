@@ -36,7 +36,35 @@ unpack (Strinteger numeral) = fromMaybe err (engNumeral2Integer numeral)
 -- | Translate Integer to String (if possible)
 -- TODO: implement Integer->String translation
 integer2EngNumeral :: Integer -> Maybe String
-integer2EngNumeral = undefined
+integer2EngNumeral number
+  | number < 20 = (SH.num2word 1 number)
+  | (number < 100) && (number `mod` 10 == 0) = (SH.num2word 10 (number `div` 10))
+  | (number < 100) = Just ((fromJust (SH.num2word 10 (number `div` 10))) ++ "-" ++ (fromJust (integer2EngNumeral (number `mod` 10))))
+  | otherwise = Just ((fromJust (integer2EngNumeral (number `div` maxScale))) ++ " " ++ (fromJust (SH.num2word maxScale 0)))
+    where
+      maxScale = heighestScaleWord number (heighestScale number (10^63))
+
+-- | Vraci nejvyssi rozsa
+heighestScaleWord :: Integer ->Integer -> Integer
+heighestScaleWord number scale = case word of
+  Nothing -> heighestScaleWord number (scale `div` 10)
+  _ -> scale
+  where
+    word = SH.num2word scale 0
+
+heighestScale :: Integer -> Integer -> Integer
+heighestScale n s
+    | n `div` s == 0 = heighestScale n (s `div` 10){- sniz rozsah-}
+    | otherwise = s
+
+numeralSingle :: Integer -> Integer -> String
+numeralSingle number scale
+  | divResult == 0 = ""
+  | otherwise = fromJust (SH.num2word 1 divResult) ++ fromJust (SH.num2word scale 0)
+      where
+        divResult = number `div` scale  -- deleni beze zbytku
+
+countDigits x = length (show (abs (x)))
 
 -- | Translate String to Integer (if possible)
 -- TODO: implement String->Integer translation
