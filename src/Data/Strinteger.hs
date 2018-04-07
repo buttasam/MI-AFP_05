@@ -40,9 +40,15 @@ integer2EngNumeral number
   | number < 20 = (SH.num2word 1 number)
   | (number < 100) && (number `mod` 10 == 0) = (SH.num2word 10 (number `div` 10))
   | (number < 100) = Just ((fromJust (SH.num2word 10 (number `div` 10))) ++ "-" ++ (fromJust (integer2EngNumeral (number `mod` 10))))
-  | otherwise = Just ((fromJust (integer2EngNumeral (number `div` maxScale))) ++ " " ++ (fromJust (SH.num2word maxScale 0)))
+  | otherwise = Just ((fromJust (integer2EngNumeral leftNumber) ++ " " ++ (fromJust (SH.num2word maxScale 0))) ++ lastNumberString restNumber)
     where
       maxScale = heighestScaleWord number (heighestScale number (10^63))
+      leftNumber = number `div` maxScale
+      restNumber = number - (leftNumber * maxScale)
+      lastNumberString :: Integer -> String
+      lastNumberString restNumber
+        | restNumber == 0 = ""
+        | otherwise = " " ++ (fromJust (integer2EngNumeral restNumber))
 
 -- | Vraci nejvyssi rozsa
 heighestScaleWord :: Integer ->Integer -> Integer
@@ -71,9 +77,8 @@ countDigits x = length (show (abs (x)))
 engNumeral2Integer :: String -> Maybe Integer
 engNumeral2Integer = undefined
 
--- TODO: implement Strinteger instances of Num, Ord, Eq, Enum, Real, and Integral
 instance Eq Strinteger where
-    (==) = undefined
+    (Strinteger s1) == (Strinteger s2) = s1 == s2
 
 instance Ord Strinteger where
     compare = undefined
