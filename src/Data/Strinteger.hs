@@ -51,7 +51,7 @@ integer2EngNumeral number
         | restNumber == 0 = ""
         | otherwise = " " ++ (fromJust (integer2EngNumeral restNumber))
 
--- | Vraci nejvyssi rozsa
+-- | Vraci nejvyssi rozsah
 heighestScaleWord :: Integer ->Integer -> Integer
 heighestScaleWord number scale = case word of
   Nothing -> heighestScaleWord number (scale `div` 10)
@@ -64,19 +64,23 @@ heighestScale n s
     | n `div` s == 0 = heighestScale n (s `div` 10){- sniz rozsah-}
     | otherwise = s
 
-numeralSingle :: Integer -> Integer -> String
-numeralSingle number scale
-  | divResult == 0 = ""
-  | otherwise = fromJust (SH.num2word 1 divResult) ++ fromJust (SH.num2word scale 0)
-      where
-        divResult = number `div` scale  -- deleni beze zbytku
-
-countDigits x = length (show (abs (x)))
 
 -- | Translate String to Integer (if possible)
 -- TODO: implement String->Integer translation
 engNumeral2Integer :: String -> Maybe Integer
-engNumeral2Integer = undefined
+engNumeral2Integer enNums  = undefined
+
+wordToNums :: String -> [Integer]
+wordToNums enNums = map (wordToNum) (splitOn " " enNums)
+
+wordToNum :: String -> Integer
+wordToNum word = case wordMaybe of
+  Nothing -> sum (map (wordToNum) (splitOn "-" word))
+  _ -> ((if number == 0 then 1 else number) * scale)
+  where
+    wordMaybe = SH.word2num word
+    scale = fst (fromJust wordMaybe)
+    number = snd (fromJust wordMaybe)
 
 instance Eq Strinteger where
     (Strinteger s1) == (Strinteger s2) = s1 == s2
