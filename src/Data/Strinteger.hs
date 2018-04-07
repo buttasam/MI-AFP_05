@@ -2,7 +2,7 @@ module Data.Strinteger where
 
 import Data.Maybe
 -- You might need to use intercalate and splitOn (similar to words/unwords)
-import Data.List (intercalate)
+import Data.List (intercalate, elemIndex, isPrefixOf)
 import Data.List.Split (splitOn)
 
 -- Use Data.Strinteger.Helpers submodule
@@ -64,11 +64,30 @@ heighestScale n s
     | n `div` s == 0 = heighestScale n (s `div` 10){- sniz rozsah-}
     | otherwise = s
 
+replace :: Eq a => [a] -> [a] -> [a] -> [a]
+replace [] _ _ = []
+replace s find repl =
+    if take (length find) s == find
+        then repl ++ (replace (drop (length find) s) find repl)
+        else [head s] ++ (replace (tail s) find repl)
+
 
 -- | Translate String to Integer (if possible)
 -- TODO: implement String->Integer translation
 engNumeral2Integer :: String -> Maybe Integer
-engNumeral2Integer enNums  = undefined
+engNumeral2Integer enNums
+  | isPrefixOf "minus " enNums = Just ((-1) * fromJust ((engNumeral2Integer (replace enNums "minus " ""))))
+  | enNums == "zero" = Just 0
+  | otherwise = Just (numsSum (wordToNums enNums))
+
+numsSum :: [Integer] -> Integer
+numsSum [] = 0
+numsSum arr@(x:xs) = if(xs /= []) then ((numsSum leftArr) * maxNum) + (numsSum rightArr) else x
+  where
+    maxNum = maximum arr
+    maxIndex = fromJust (elemIndex maxNum arr)
+    leftArr = take maxIndex arr
+    rightArr = drop (maxIndex + 1) arr
 
 wordToNums :: String -> [Integer]
 wordToNums enNums = map (wordToNum) (splitOn " " enNums)
@@ -86,15 +105,16 @@ instance Eq Strinteger where
     (Strinteger s1) == (Strinteger s2) = s1 == s2
 
 instance Ord Strinteger where
-    compare = undefined
+    compare s1 s2 = compare (unpack s1) (unpack s2)
 
 instance Num Strinteger where
-    (+) = undefined
-    (*) = undefined
-    negate = undefined
-    abs = undefined
-    signum = undefined
-    fromInteger = undefined
+    (+) s1 s2 = pack ((unpack s1) + (unpack s2))
+    (*) s1 s2 = pack ((unpack s1) * (unpack s2))
+    (-) s1 s2 = pack ((unpack s1) - (unpack s2))
+    negate s = pack ((unpack s) * (-1))
+    abs s = pack (abs (unpack s))
+    signum s = pack (signum (unpack s))
+    fromInteger s = undefined
 
 instance Enum Strinteger where
     toEnum = undefined
