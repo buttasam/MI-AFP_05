@@ -34,9 +34,10 @@ unpack (Strinteger numeral) = fromMaybe err (engNumeral2Integer numeral)
 
 
 -- | Translate Integer to String (if possible)
--- TODO: implement Integer->String translation
 integer2EngNumeral :: Integer -> Maybe String
 integer2EngNumeral number
+  | abs(number) > SH.highestPossible = error ("Uncovertable Integer: " ++ show (number))
+  | number < 0 = Just ("minus " ++ (fromJust (integer2EngNumeral (abs number))))
   | number < 20 = (SH.num2word 1 number)
   | (number < 100) && (number `mod` 10 == 0) = (SH.num2word 10 (number `div` 10))
   | (number < 100) = Just ((fromJust (SH.num2word 10 (number `div` 10))) ++ "-" ++ (fromJust (integer2EngNumeral (number `mod` 10))))
