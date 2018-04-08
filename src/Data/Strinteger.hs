@@ -33,6 +33,14 @@ unpack (Strinteger numeral) = fromMaybe err (engNumeral2Integer numeral)
                                 err = error $ SH.messageBadNumeral numeral
 
 
+-- | Helper function
+replace :: Eq a => [a] -> [a] -> [a] -> [a]
+replace [] _ _ = []
+replace s find repl =
+  if take (length find) s == find
+  then repl ++ (replace (drop (length find) s) find repl)
+  else [head s] ++ (replace (tail s) find repl)
+
 -- | Translate Integer to String (if possible)
 integer2EngNumeral :: Integer -> Maybe String
 integer2EngNumeral number
@@ -50,26 +58,16 @@ integer2EngNumeral number
       lastNumberString restNumber
         | restNumber == 0 = ""
         | otherwise = " " ++ (fromJust (integer2EngNumeral restNumber))
-
--- | Vraci nejvyssi rozsah
-heighestScaleWord :: Integer ->Integer -> Integer
-heighestScaleWord number scale = case word of
-  Nothing -> heighestScaleWord number (scale `div` 10)
-  _ -> scale
-  where
-    word = SH.num2word scale 0
-
-heighestScale :: Integer -> Integer -> Integer
-heighestScale n s
-    | n `div` s == 0 = heighestScale n (s `div` 10){- sniz rozsah-}
-    | otherwise = s
-
-replace :: Eq a => [a] -> [a] -> [a] -> [a]
-replace [] _ _ = []
-replace s find repl =
-    if take (length find) s == find
-        then repl ++ (replace (drop (length find) s) find repl)
-        else [head s] ++ (replace (tail s) find repl)
+      heighestScaleWord :: Integer ->Integer -> Integer
+      heighestScaleWord number scale = case word of
+        Nothing -> heighestScaleWord number (scale `div` 10)
+        _ -> scale
+        where
+          word = SH.num2word scale 0
+      heighestScale :: Integer -> Integer -> Integer
+      heighestScale n s
+          | n `div` s == 0 = heighestScale n (s `div` 10){- sniz rozsah-}
+          | otherwise = s
 
 
 -- | Translate String to Integer (if possible)
@@ -79,38 +77,35 @@ engNumeral2Integer enNums
   | hasError enNums = error (SH.messageBadNumeral enNums)
   | enNums == "zero" = Just 0
   | otherwise = Just (numsSum (wordToNums enNums))
-
-numsSum :: [Integer] -> Integer
-numsSum [] = 0
-numsSum arr@(x:xs) = if(xs /= []) then ((numsSum leftArr) * maxNum) + (numsSum rightArr) else x
   where
-    maxNum = maximum arr
-    maxIndex = fromJust (elemIndex maxNum arr)
-    leftArr = take maxIndex arr
-    rightArr = drop (maxIndex + 1) arr
-
-wordToNums :: String -> [Integer]
-wordToNums enNums = map (wordToNum) (splitOn " " enNums)
-
-wordToNum :: String -> Integer
-wordToNum word = case wordMaybe of
-  Nothing -> sum (map (wordToNum) (splitOn "-" word))
-  _ -> ((if number == 0 then 1 else number) * scale)
-  where
-    wordMaybe = SH.word2num word
-    scale = fst (fromJust wordMaybe)
-    number = snd (fromJust wordMaybe)
-
-hasError input
-  | elem "zero" splitted && (length splitted /= 1) = True
-  | otherwise = (length splitted) /= (length (filter (wordExists) splitted))
-  where
-    splitted = splitOn " " replaced
-    replaced = replace input "-" " "
-    wordExists ::  String -> Bool
-    wordExists w = case SH.word2num w of
-      Nothing -> False
-      _ -> True
+    hasError input
+      | elem "zero" splitted && (length splitted /= 1) = True
+      | otherwise = (length splitted) /= (length (filter (wordExists) splitted))
+      where
+        splitted = splitOn " " replaced
+        replaced = replace input "-" " "
+        wordExists ::  String -> Bool
+        wordExists w = case SH.word2num w of
+          Nothing -> False
+          _ -> True
+    numsSum :: [Integer] -> Integer
+    numsSum [] = 0
+    numsSum arr@(x:xs) = if(xs /= []) then ((numsSum leftArr) * maxNum) + (numsSum rightArr) else x
+      where
+        maxNum = maximum arr
+        maxIndex = fromJust (elemIndex maxNum arr)
+        leftArr = take maxIndex arr
+        rightArr = drop (maxIndex + 1) arr
+    wordToNums :: String -> [Integer]
+    wordToNums enNums = map (wordToNum) (splitOn " " enNums)
+    wordToNum :: String -> Integer
+    wordToNum word = case wordMaybe of
+      Nothing -> sum (map (wordToNum) (splitOn "-" word))
+      _ -> ((if number == 0 then 1 else number) * scale)
+      where
+        wordMaybe = SH.word2num word
+        scale = fst (fromJust wordMaybe)
+        number = snd (fromJust wordMaybe)
 
 instance Eq Strinteger where
     (Strinteger s1) == (Strinteger s2) = s1 == s2
