@@ -73,10 +73,10 @@ replace s find repl =
 
 
 -- | Translate String to Integer (if possible)
--- TODO: implement String->Integer translation
 engNumeral2Integer :: String -> Maybe Integer
 engNumeral2Integer enNums
   | isPrefixOf "minus " enNums = Just ((-1) * fromJust ((engNumeral2Integer (replace enNums "minus " ""))))
+  | hasError enNums = error (SH.messageBadNumeral enNums)
   | enNums == "zero" = Just 0
   | otherwise = Just (numsSum (wordToNums enNums))
 
@@ -101,6 +101,17 @@ wordToNum word = case wordMaybe of
     scale = fst (fromJust wordMaybe)
     number = snd (fromJust wordMaybe)
 
+hasError input
+  | elem "zero" splitted && (length splitted /= 1) = True
+  | otherwise = (length splitted) /= (length (filter (wordExists) splitted))
+  where
+    splitted = splitOn " " replaced
+    replaced = replace input "-" " "
+    wordExists ::  String -> Bool
+    wordExists w = case SH.word2num w of
+      Nothing -> False
+      _ -> True
+
 instance Eq Strinteger where
     (Strinteger s1) == (Strinteger s2) = s1 == s2
 
@@ -114,15 +125,18 @@ instance Num Strinteger where
     negate s = pack ((unpack s) * (-1))
     abs s = pack (abs (unpack s))
     signum s = pack (signum (unpack s))
-    fromInteger s = undefined
+    fromInteger s = pack (fromInteger s)
 
 instance Enum Strinteger where
-    toEnum = undefined
-    fromEnum = undefined
+    toEnum s = pack (toInteger s)
+    fromEnum s = fromInteger (unpack s)
 
 instance Real Strinteger where
-    toRational = undefined
+    toRational s = toRational (unpack s)
 
 instance Integral Strinteger where
-    quotRem = undefined
-    toInteger = undefined
+    quotRem s1 s2 = (pack (n1 `quot` n2), pack (n1 `rem` n2))
+      where
+        n1 = unpack s1
+        n2 = unpack s2
+    toInteger s = unpack s
