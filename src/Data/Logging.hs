@@ -52,7 +52,7 @@ data EventSourceMatcher = Exact EventSource
 
 -- | Change log level operator
 ($=) :: LogMessage -> LogLevel -> LogMessage
-($=) (LogMessage lmSource lmMessage lmTimestamp lmHiddenFlag lmLogLevel) changedLevel = LogMessage lmSource lmMessage lmTimestamp lmHiddenFlag changedLevel
+($=) lm nl = lm { lmLogLevel = nl }
 
 
 -- | EventSource "combinator"
